@@ -22,6 +22,21 @@ function fakeContext() {
   const effects = []
   const sections = []
   let roots = []
+  /**
+   * Services reachable through `ctx.get()`, exactly as an injected Cordis
+   * context would expose them. Anything NOT in here must be refused: a real
+   * Cordis context is a Proxy that THROWS on an un-injected service, and a fake
+   * that silently answers `undefined` hides that class of bug entirely — which
+   * is exactly how `ctx.systemPrompt?.section?.()` shipped once.
+   */
+  const services = {
+    systemPrompt: {
+      section(section) {
+        sections.push(section)
+        return () => {}
+      },
+    },
+  }
   const ctx = {
     logger: {
       warn: (message) => process.stderr.write(`[warn] ${message}\n`),
@@ -33,18 +48,12 @@ function fakeContext() {
           on: () => () => {},
         }
       }
-      return undefined
+      return services[name]
     },
     effect(callback) {
       const dispose = callback()
       effects.push(dispose)
       return dispose
-    },
-    systemPrompt: {
-      section(section) {
-        sections.push(section)
-        return () => {}
-      },
     },
     tools: {
       register(definition) {
@@ -62,8 +71,18 @@ function fakeContext() {
       },
     },
   }
+  // Refuse any service the plugin reaches without `inject`, the way Cordis does.
+  const injected = new Set(['tools', 'webServer'])
+  const guarded = new Proxy(ctx, {
+    get(target, property, receiver) {
+      if (typeof property === 'string' && !(property in target) && !injected.has(property)) {
+        throw new Error(`cannot get property "${property}" without inject`)
+      }
+      return Reflect.get(target, property, receiver)
+    },
+  })
   return {
-    ctx,
+    ctx: guarded,
     tools,
     routes,
     effects,

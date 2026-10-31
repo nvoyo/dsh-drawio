@@ -97,7 +97,13 @@ export function apply(ctx, rawConfig) {
 
   // Tell the model the convention once, so it opens a diagram instead of
   // inventing an ad-hoc text format for box-and-arrow pictures.
-  ctx.systemPrompt?.section?.({
+  //
+  // `systemPrompt` is optional: it must be read through `ctx.get()`, because a
+  // Cordis context is a Proxy that THROWS on an un-injected service rather than
+  // returning undefined — so `ctx.systemPrompt?.section?.()` would crash the
+  // whole plugin instead of skipping the section.
+  const systemPrompt = ctx.get('systemPrompt')
+  systemPrompt?.section?.({
     name: '@sorarisu/dsh-drawio',
     order: 40,
     text: [
