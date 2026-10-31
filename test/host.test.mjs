@@ -93,10 +93,32 @@ function fakeContext() {
   }
 }
 
-/** Invoke one tool call the way the registry does: validate, then execute. */
+/**
+ * Assert a value is lossless JSON, the way the tool registry checks every
+ * successful return before rendering it. `undefined` inside an object is NOT
+ * lossless: it drops keys on serialisation, and the registry rejects the whole
+ * result with "value is not lossless JSON".
+ */
+function assertLosslessJson(value, path = 'value') {
+  if (value === undefined) throw new Error(`${path} is undefined, which is not lossless JSON`)
+  if (typeof value === 'function' || typeof value === 'symbol' || typeof value === 'bigint') {
+    throw new Error(`${path} is ${typeof value}, which is not lossless JSON`)
+  }
+  if (typeof value === 'number' && !Number.isFinite(value)) throw new Error(`${path} is not a finite number`)
+  if (Array.isArray(value)) {
+    value.forEach((item, index) => assertLosslessJson(item, `${path}[${index}]`))
+    return
+  }
+  if (value !== null && typeof value === 'object') {
+    for (const [key, item] of Object.entries(value)) assertLosslessJson(item, `${path}.${key}`)
+  }
+}
+
+/** Invoke one tool call the way the registry does: validate, execute, check output. */
 async function callTool(definition, args) {
   const controller = new AbortController()
   const value = await definition.execute(args, { signal: controller.signal, arguments: args })
+  assertLosslessJson(value)
   return value
 }
 
