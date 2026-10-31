@@ -307,6 +307,10 @@ async function main() {
   await checkAsync('export writes an SVG beside the diagram', async () => {
     const value = await callTool(tool, { action: 'export', path: 'docs/flow.drawio' })
     assert.equal(value.exportedPath, 'docs/flow.svg')
+    // Node counting must agree with create/read: vertices only, no edges.
+    const readBack = await callTool(tool, { action: 'read', path: 'docs/flow.drawio' })
+    assert.equal(value.nodes, readBack.nodes, 'export node count must match read')
+    assert.equal(value.edges, readBack.edges, 'export edge count must match read')
     const svg = await readFile(join(workspace, 'docs/flow.svg'), 'utf8')
     assert.match(svg, /^<svg/u)
     assert.match(svg, /密码正确？/u)
