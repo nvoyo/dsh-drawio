@@ -37,6 +37,18 @@ window.__ModuleLoader__.load({
     /** Copy, registered as one namespace so both locales stay in step. */
     const ZH = {
       'panel.title': '图表',
+      'panel.description': '用 draw.io 画流程图、时序图、组织架构图——模型与您在同一批 .drawio 文件上协作。',
+      'panel.subtitle': '未选择文件',
+      'preview.failed': '预览加载失败：文件可能已被移动或删除。',
+      'stats.engine': '引擎',
+      'stats.engineDetail': 'dsh-drawio 插件运行中',
+      'stats.files': '图表文件',
+      'stats.filesUnit': '份',
+      'stats.filesDetail': '递归扫描工作区',
+      'stats.active': '当前打开',
+      'stats.noneActive': '从左侧列表选择一个文件',
+      'stats.roots': '工作区',
+      'stats.rootsDetail': '已注册的可写根目录',
       'list.title': '图表文件',
       'list.empty': '工作区里还没有 .drawio 文件。让 DeepSeek 画一个，或点「新建」。',
       'list.loading': '正在读取…',
@@ -61,6 +73,18 @@ window.__ModuleLoader__.load({
 
     const EN = {
       'panel.title': 'Diagrams',
+      'panel.description': 'Flowcharts, sequence diagrams, and org charts with draw.io — the agent and you share one set of .drawio files.',
+      'panel.subtitle': 'No file selected',
+      'preview.failed': 'Preview failed to load: the file may have moved or been deleted.',
+      'stats.engine': 'Engine',
+      'stats.engineDetail': 'dsh-drawio plugin running',
+      'stats.files': 'Diagram files',
+      'stats.filesUnit': '',
+      'stats.filesDetail': 'Recursive workspace scan',
+      'stats.active': 'Open now',
+      'stats.noneActive': 'Pick a file from the list',
+      'stats.roots': 'Workspaces',
+      'stats.rootsDetail': 'Registered writable roots',
       'list.title': 'Diagram files',
       'list.empty': 'No .drawio file in this workspace yet. Ask DeepSeek for one, or press New.',
       'list.loading': 'Loading…',
@@ -85,57 +109,79 @@ window.__ModuleLoader__.load({
 
     /** Stylesheet, token-only so it follows the host theme. */
     const CSS = `
-.dshdrawio_main{box-sizing:border-box;height:100%;min-height:0;display:flex;flex-direction:column;background:var(--dsw-alias-bg-base);color:var(--dsw-alias-label-primary);font-size:13px}
-.dshdrawio_head{display:flex;align-items:center;gap:10px;padding:12px 20px;border-bottom:0.5px solid var(--dsw-alias-border-l1);flex:none;min-height:52px}
-.dshdrawio_headTitle{font-size:14px;font-weight:600;letter-spacing:0.2px;margin-right:auto;display:flex;align-items:center;gap:8px}
-.dshdrawio_headIcon{width:18px;height:18px;color:var(--dsw-alias-brand-primary);flex:none}
-.dshdrawio_body{flex:1;min-height:0;display:flex}
-.dshdrawio_list{width:260px;flex:none;border-right:0.5px solid var(--dsw-alias-border-l1);overflow-y:auto;padding:10px 8px;background:var(--dsw-alias-bg-layer-1)}
-.dshdrawio_listHead{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;color:var(--dsw-alias-label-secondary);padding:4px 10px 8px}
-.dshdrawio_row{position:relative;display:flex;flex-direction:column;gap:3px;width:100%;text-align:left;padding:9px 12px;border:0;border-radius:8px;background:transparent;color:inherit;cursor:pointer;font:inherit;transition:background 120ms ease}
+.dshdrawio_main{box-sizing:border-box;width:100%;min-height:100%;margin:0 auto;padding:24px 28px 48px;background:
+  radial-gradient(1200px 400px at 85% -10%, color-mix(in srgb, var(--dsw-alias-brand-primary) 7%, transparent), transparent 70%),
+  var(--dsw-alias-bg-base);color:var(--dsw-alias-label-primary);font-size:13px}
+.dshdrawio_pageHeader{display:flex;justify-content:space-between;align-items:flex-start;gap:16px 24px;margin-bottom:20px;flex-wrap:wrap}
+.dshdrawio_pageHeaderText h2{margin:0;font-size:22px;font-weight:700;line-height:28px;letter-spacing:-0.2px}
+.dshdrawio_pageHeaderText p{margin:6px 0 0;color:var(--dsw-alias-label-secondary);font-size:13px;line-height:20px;max-width:60ch}
+.dshdrawio_pageHeaderMeta{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.dshdrawio_pageChip{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:11.5px;line-height:20px;padding:3px 10px;border-radius:999px;border:0.5px solid var(--dsw-alias-border-l2);color:var(--dsw-alias-label-secondary);background:var(--dsw-alias-bg-layer-1);max-width:340px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dshdrawio_pageChip[data-warn="true"]{color:var(--dsw-alias-state-warn-primary);border-color:var(--dsw-alias-state-warn-primary)}
+/* overview strip: one shared-border row of stat tiles */
+.dshdrawio_healthStrip{display:flex;flex-wrap:wrap;position:relative;overflow:hidden;border:0.5px solid var(--dsw-alias-border-l2);border-radius:12px;margin-bottom:22px;background:var(--dsw-alias-bg-layer-1)}
+.dshdrawio_healthStrip article{box-sizing:border-box;border-top:0.5px solid var(--dsw-alias-border-l2);border-left:0.5px solid var(--dsw-alias-border-l2);flex:1 160px;display:flex;align-items:flex-start;gap:10px;min-width:0;min-height:84px;margin:-0.5px 0 0 -0.5px;padding:16px 18px;transition:background 150ms ease}
+.dshdrawio_healthStrip article:hover{background:var(--dsw-alias-bg-layer-2)}
+.dshdrawio_healthDot{border-radius:50%;flex:none;width:7px;height:7px;margin-top:6px;background:var(--dsw-alias-state-success-primary);box-shadow:0 0 0 3px color-mix(in srgb, var(--dsw-alias-state-success-primary) 18%, transparent)}
+.dshdrawio_healthBody{min-width:0;display:flex;flex-direction:column;gap:3px}
+.dshdrawio_healthLabel{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.9px;color:var(--dsw-alias-label-secondary)}
+.dshdrawio_healthValue{font-size:15px;font-weight:650;line-height:22px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dshdrawio_healthDetail{margin:0;font-size:11px;color:var(--dsw-alias-label-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* body: list column + stage */
+.dshdrawio_body{display:flex;gap:20px;align-items:stretch}
+.dshdrawio_list{width:288px;flex:none;display:flex;flex-direction:column;gap:10px;min-width:0}
+.dshdrawio_sectionHeading{display:flex;align-items:baseline;justify-content:space-between;gap:8px;padding:0 4px}
+.dshdrawio_sectionTitle{margin:0;font-size:13.5px;font-weight:600;line-height:20px}
+.dshdrawio_sectionMeta{font-size:11px;color:var(--dsw-alias-label-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dshdrawio_fileCard{border:0.5px solid var(--dsw-alias-border-l2);border-radius:12px;background:var(--dsw-alias-bg-layer-1);overflow:hidden;padding:6px;display:flex;flex-direction:column;gap:2px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.dshdrawio_row{position:relative;display:flex;flex-direction:column;gap:3px;width:100%;text-align:left;padding:10px 14px;border:0;border-radius:8px;background:transparent;color:inherit;cursor:pointer;font:inherit;transition:background 120ms ease}
 .dshdrawio_row:hover{background:var(--dsw-alias-bg-layer-2)}
 .dshdrawio_row[data-active="true"]{background:var(--dsw-alias-bg-layer-2)}
-.dshdrawio_row[data-active="true"]::before{content:'';position:absolute;left:0;top:8px;bottom:8px;width:3px;border-radius:2px;background:var(--dsw-alias-brand-primary)}
-.dshdrawio_rowName{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dshdrawio_row[data-active="true"]::before{content:'';position:absolute;left:0;top:9px;bottom:9px;width:3px;border-radius:2px;background:var(--dsw-alias-brand-primary)}
+.dshdrawio_rowName{font-size:13px;font-weight:550;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .dshdrawio_row[data-active="true"] .dshdrawio_rowName{color:var(--dsw-alias-brand-primary)}
 .dshdrawio_rowMeta{font-size:11px;color:var(--dsw-alias-label-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.dshdrawio_stage{flex:1;min-width:0;min-height:0;display:flex;flex-direction:column;position:relative;background:var(--dsw-alias-bg-layer-1)}
-.dshdrawio_toolbar{display:flex;align-items:center;gap:8px;padding:8px 14px;border-bottom:0.5px solid var(--dsw-alias-border-l1);flex:none;flex-wrap:wrap;background:var(--dsw-alias-bg-base)}
-.dshdrawio_btn{display:inline-flex;align-items:center;gap:5px;padding:5px 12px;font:inherit;font-size:12.5px;border-radius:7px;border:0.5px solid var(--dsw-alias-border-l2);background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-label-primary);cursor:pointer;transition:background 120ms ease,opacity 120ms ease}
+/* stage card */
+.dshdrawio_stage{flex:1;min-width:0;min-height:460px;display:flex;flex-direction:column;position:relative}
+.dshdrawio_stageCard{flex:1;display:flex;flex-direction:column;min-height:420px;border:0.5px solid var(--dsw-alias-border-l2);border-radius:12px;background:var(--dsw-alias-bg-layer-1);overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,.05),0 8px 24px rgba(0,0,0,.05)}
+.dshdrawio_toolbar{display:flex;align-items:center;gap:8px;padding:10px 16px;border-bottom:0.5px solid var(--dsw-alias-border-l1);flex:none;flex-wrap:wrap;background:var(--dsw-alias-bg-layer-1)}
+.dshdrawio_btn{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;font:inherit;font-size:12.5px;font-weight:550;border-radius:8px;border:0.5px solid var(--dsw-alias-border-l2);background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-label-primary);cursor:pointer;transition:background 120ms ease,opacity 120ms ease,transform 80ms ease}
 .dshdrawio_btn:hover{background:var(--dsw-alias-bg-overlay)}
+.dshdrawio_btn:active{transform:translateY(1px)}
 .dshdrawio_btn:disabled{opacity:.45;cursor:default}
-.dshdrawio_btnPrimary{border-color:transparent;background:var(--dsw-alias-brand-primary);color:#fff}
-.dshdrawio_btnPrimary:hover{background:var(--dsw-alias-brand-primary);opacity:.9}
+.dshdrawio_btn:focus-visible{outline:2px solid var(--dsw-alias-brand-primary);outline-offset:1px}
+.dshdrawio_btnPrimary{border-color:transparent;background:var(--dsw-alias-brand-primary);color:#fff;box-shadow:0 1px 2px color-mix(in srgb, var(--dsw-alias-brand-primary) 35%, transparent)}
+.dshdrawio_btnPrimary:hover{background:var(--dsw-alias-brand-primary);opacity:.92}
 .dshdrawio_hint{font-size:11.5px;color:var(--dsw-alias-label-secondary);margin-left:auto;display:inline-flex;align-items:center;gap:5px;min-width:0;overflow:hidden}
-.dshdrawio_path{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.dshdrawio_dot{width:6px;height:6px;border-radius:50%;background:var(--dsw-alias-state-warn-primary);display:inline-block;flex:none}
-.dshdrawio_frameWrap{flex:1;min-height:0;position:relative;background:var(--dsw-alias-bg-base)}
+.dshdrawio_dot{width:7px;height:7px;border-radius:50%;background:var(--dsw-alias-state-warn-primary);display:inline-block;flex:none;box-shadow:0 0 0 3px color-mix(in srgb, var(--dsw-alias-state-warn-primary) 18%, transparent)}
+.dshdrawio_frameWrap{flex:1;min-height:0;position:relative;background:
+  linear-gradient(180deg, color-mix(in srgb, var(--dsw-alias-bg-layer-2) 55%, var(--dsw-alias-bg-base)), var(--dsw-alias-bg-base));}
 .dshdrawio_frame{width:100%;height:100%;border:0;display:block;background:#fff}
-.dshdrawio_overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:24px;text-align:center;color:var(--dsw-alias-label-secondary);background:var(--dsw-alias-bg-base)}
-.dshdrawio_preview{position:absolute;inset:0;overflow:auto;display:flex;align-items:flex-start;justify-content:center;padding:20px;background:var(--dsw-alias-bg-base)}
-.dshdrawio_canvas{max-width:100%;border-radius:10px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.08),0 4px 16px rgba(0,0,0,.06);overflow:hidden}
+.dshdrawio_overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:24px;text-align:center;color:var(--dsw-alias-label-secondary);background:var(--dsw-alias-bg-layer-1)}
+.dshdrawio_preview{flex:1;min-height:0;overflow:auto;display:flex;align-items:flex-start;justify-content:center;padding:24px;background:var(--dsw-alias-bg-base)}
+.dshdrawio_canvas{max-width:100%;border-radius:12px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.08),0 8px 28px rgba(0,0,0,.07);overflow:hidden}
 .dshdrawio_canvas img,.dshdrawio_canvas svg{display:block;width:100%;height:auto}
-.dshdrawio_empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:var(--dsw-alias-label-secondary);padding:32px;text-align:center}
-.dshdrawio_emptyGlyph{font-size:34px;opacity:.45;line-height:1}
-.dshdrawio_emptyTitle{font-size:14.5px;font-weight:500;color:var(--dsw-alias-label-primary)}
+.dshdrawio_empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--dsw-alias-label-secondary);padding:40px;text-align:center}
+.dshdrawio_emptyGlyph{font-size:40px;opacity:.4;line-height:1}
+.dshdrawio_emptyTitle{font-size:15px;font-weight:600;color:var(--dsw-alias-label-primary)}
 .dshdrawio_error{color:var(--dsw-alias-state-error-primary);font-size:12.5px;padding:6px 10px}
 .dshdrawio_small{font-size:11.5px;color:var(--dsw-alias-label-secondary)}
 /* chat-side inline preview */
-.dshdrawio_chat{border:0.5px solid var(--dsw-alias-border-l1);border-radius:10px;overflow:hidden;background:var(--dsw-alias-bg-layer-1);max-width:640px}
-.dshdrawio_chatHead{display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:0.5px solid var(--dsw-alias-border-l1);font-size:12px;color:var(--dsw-alias-label-secondary);background:var(--dsw-alias-bg-layer-2)}
+.dshdrawio_chat{border:0.5px solid var(--dsw-alias-border-l1);border-radius:12px;overflow:hidden;background:var(--dsw-alias-bg-layer-1);max-width:640px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.dshdrawio_chatHead{display:flex;align-items:center;gap:8px;padding:9px 14px;border-bottom:0.5px solid var(--dsw-alias-border-l1);font-size:12px;color:var(--dsw-alias-label-secondary);background:var(--dsw-alias-bg-layer-2)}
 .dshdrawio_chatHeadTitle{font-weight:600;color:var(--dsw-alias-label-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.dshdrawio_chatMeta{margin-left:auto;flex:none}
+.dshdrawio_chatMeta{margin-left:auto;flex:none;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px}
 .dshdrawio_chatBody{background:#fff;display:flex;justify-content:center}
 .dshdrawio_chatBody img,.dshdrawio_chatBody svg{display:block;width:100%;height:auto;max-height:420px;object-fit:contain}
-.dshdrawio_chatFoot{display:flex;gap:10px;padding:7px 12px;border-top:0.5px solid var(--dsw-alias-border-l1);font-size:11.5px;color:var(--dsw-alias-label-secondary);background:var(--dsw-alias-bg-layer-2)}
-.dshdrawio_chatLink{color:var(--dsw-alias-brand-primary);text-decoration:none;cursor:pointer}
+.dshdrawio_chatFoot{display:flex;gap:10px;padding:8px 14px;border-top:0.5px solid var(--dsw-alias-border-l1);font-size:11.5px;color:var(--dsw-alias-label-secondary);background:var(--dsw-alias-bg-layer-2)}
+.dshdrawio_chatLink{color:var(--dsw-alias-brand-primary);text-decoration:none;cursor:pointer;background:none;border:0;font:inherit;padding:0}
 .dshdrawio_chatLink:hover{text-decoration:underline}
 /* right-sidebar tab body */
-.dshdrawio_right{box-sizing:border-box;height:100%;min-height:0;overflow:auto;padding:12px;display:flex;flex-direction:column;gap:10px;background:var(--dsw-alias-bg-base);color:var(--dsw-alias-label-primary)}
+.dshdrawio_right{box-sizing:border-box;height:100%;min-height:0;overflow:auto;padding:14px;display:flex;flex-direction:column;gap:10px;background:var(--dsw-alias-bg-base);color:var(--dsw-alias-label-primary)}
 .dshdrawio_rightTitle{font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.dshdrawio_rightCard{border:0.5px solid var(--dsw-alias-border-l1);border-radius:10px;overflow:hidden;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.dshdrawio_rightCard{border:0.5px solid var(--dsw-alias-border-l1);border-radius:12px;overflow:hidden;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.06)}
 .dshdrawio_rightCard img,.dshdrawio_rightCard svg{display:block;width:100%;height:auto}
-.dshdrawio_rightEmpty{color:var(--dsw-alias-label-secondary);font-size:12px;padding:16px;text-align:center;border:0.5px dashed var(--dsw-alias-border-l2);border-radius:10px}
+.dshdrawio_rightEmpty{color:var(--dsw-alias-label-secondary);font-size:12px;padding:16px;text-align:center;border:0.5px dashed var(--dsw-alias-border-l2);border-radius:12px}
 `
 
     /** The panel's icon in the sidebar rail. */
@@ -196,10 +242,12 @@ window.__ModuleLoader__.load({
         spin: '1',
         libraries: '1',
         ui: 'atlas',
-        configure: '1',
-        noSaveBtn: '0',
-        saveAndExit: '0',
-        modified: '1',
+        // NO `configure=1`: the editor then blocks on a `configure` handshake
+        // before even sending `init`, and this host has no custom config to
+        // give — the editor would wait forever (this is what stuck the panel).
+        // Also no `modified`/`noSaveBtn`/`saveAndExit`: the load action carries
+        // its own controls, and URL params there only add stale-state risk.
+        saveAndExit: '1',
       })
       if (dark) params.set('dark', '1')
       return `${embedOrigin}/?${params.toString()}`
@@ -238,10 +286,25 @@ window.__ModuleLoader__.load({
           } catch {
             return
           }
+          if (message.event === 'configure') {
+            // Only reachable if someone re-enables `configure=1`: never leave
+            // the editor waiting, answer with the minimal empty config.
+            frame.contentWindow.postMessage(JSON.stringify({ action: 'configure', config: {} }), expectedOrigin)
+            return
+          }
           if (message.event === 'init') {
             setStatus('ready')
             frame.contentWindow.postMessage(
-              JSON.stringify({ action: 'load', xml: xmlRef.current, autosave: 1, title: title ?? 'diagram.drawio' }),
+              JSON.stringify({
+                action: 'load',
+                xml: xmlRef.current,
+                autosave: 1,
+                title: title ?? 'diagram.drawio',
+                // Fit the diagram into the visible area on open, so large
+                // diagrams land readable instead of zoomed into a corner.
+                fit: 1,
+                maxFitScale: 2,
+              }),
               expectedOrigin,
             )
             return
@@ -276,7 +339,6 @@ window.__ModuleLoader__.load({
           className: 'dshdrawio_frame',
           src: editorUrl(embedOrigin, dark),
           title: title ?? 'draw.io',
-          allow: 'clipboard-write',
           referrerPolicy: 'no-referrer',
         }),
         status === 'loading' &&
@@ -326,6 +388,7 @@ window.__ModuleLoader__.load({
       const [editorOpen, setEditorOpen] = React.useState(false)
       const [previewKey, setPreviewKey] = React.useState(0)
       const [dark, setDark] = React.useState(false)
+      const [imgFailed, setImgFailed] = React.useState(false)
 
       const refreshList = React.useCallback(async () => {
         setListLoading(true)
@@ -343,6 +406,7 @@ window.__ModuleLoader__.load({
       const openFile = React.useCallback(async (path) => {
         setDocError(null)
         setXmlDoc(null)
+        setImgFailed(false)
         setDraft(null)
         setDirty(false)
         setEditorOpen(false)
@@ -445,6 +509,20 @@ window.__ModuleLoader__.load({
       const onEditorError = React.useCallback((message) => {
         setDocError(message)
       }, [])
+
+      // Overview strip: the same "shared-border stat tiles" pattern the host
+      // settings pages use (one bordered row, tiles separated by inner rules).
+      const totalBytes = files.reduce((sum, file) => sum + (Number.isFinite(file.bytes) ? file.bytes : 0), 0)
+      const diagramsMeta = listLoading && files.length === 0
+        ? t('list.loading')
+        : `${files.length} ${t('stats.filesUnit')} · ${formatBytes(totalBytes)}`
+      const storageMeta = (config?.roots ?? []).length > 0 ? (config?.roots ?? []).map((root) => String(root).split('/').pop() || root).join(', ') : '—'
+      const overviewTiles = [
+        { key: 'engine', label: 'dsh-drawio', value: '0.1.0', detail: t('stats.engineDetail') },
+        { key: 'files', label: t('stats.files'), value: diagramsMeta, detail: t('stats.filesDetail') },
+        { key: 'active', label: t('stats.active'), value: active === null ? '—' : String(active.path).split('/').pop(), detail: active === null ? t('stats.noneActive') : active.path },
+        { key: 'roots', label: t('stats.roots'), value: String((config?.roots ?? []).length), detail: storageMeta },
+      ]
 
       const rows = files.map((file) => {
         const name = file.name ?? file.path
@@ -558,43 +636,85 @@ window.__ModuleLoader__.load({
                   h(
                     'div',
                     { className: 'dshdrawio_canvas' },
-                    h('img', {
-                      key: previewKey,
-                      src: `${API}/preview?path=${encodeURIComponent(active.path)}&v=${previewKey}`,
-                      alt: `${active.path}`,
-                    }),
+                    imgFailed
+                      ? h(
+                          'div',
+                          { className: 'dshdrawio_empty' },
+                          h('span', { className: 'dshdrawio_error' }, t('preview.failed')),
+                          h('span', { className: 'dshdrawio_small' }, `${active.path}`),
+                        )
+                      : h('img', {
+                          key: previewKey,
+                          src: `${API}/preview?path=${encodeURIComponent(active.path)}&v=${previewKey}`,
+                          alt: `${active.path}`,
+                          onLoad: () => setImgFailed(false),
+                          onError: () => setImgFailed(true),
+                        }),
                   ),
                 ),
           ),
         )
       })()
 
+      // Canvas meta line mirrors the host pages' `code` chip in the page header.
+      const canvasMeta = dirty ? t('unsaved') : active === null ? t('panel.subtitle') : `${active.path}`
       return h(
         'div',
         { className: 'dshdrawio_main' },
+        // Page header: title + description on the left, actions on the right.
         h(
           'div',
-          { className: 'dshdrawio_head' },
+          { className: 'dshdrawio_pageHeader' },
           h(
-            'span',
-            { className: 'dshdrawio_headTitle' },
-            h(PanelIcon, { size: 18 }),
-            t('panel.title'),
+            'div',
+            { className: 'dshdrawio_pageHeaderText' },
+            h('h2', { className: 'dshdrawio_pageTitle' }, t('panel.title')),
+            h('p', { className: 'dshdrawio_pageDescription' }, t('panel.description')),
           ),
           h(
-            'button',
-            { type: 'button', className: 'dshdrawio_btn', onClick: () => void refreshList() },
-            t('action.refresh'),
+            'div',
+            { className: 'dshdrawio_pageHeaderMeta' },
+            h('code', { className: 'dshdrawio_pageChip', 'data-warn': dirty ? 'true' : 'false' }, canvasMeta),
+            h(
+              'button',
+              { type: 'button', className: 'dshdrawio_btn', onClick: () => void refreshList() },
+              t('action.refresh'),
+            ),
+            h('button', { type: 'button', className: 'dshdrawio_btn dshdrawio_btnPrimary', onClick: () => void createFile() }, t('action.new')),
           ),
-          h('button', { type: 'button', className: 'dshdrawio_btn dshdrawio_btnPrimary', onClick: () => void createFile() }, t('action.new')),
+        ),
+        // Overview strip: shared border, inner rules between tiles.
+        h(
+          'div',
+          { className: 'dshdrawio_healthStrip' },
+          overviewTiles.map((tile) =>
+            h(
+              'article',
+              { key: tile.key, title: tile.detail },
+              h('span', { className: 'dshdrawio_healthDot' }),
+              h(
+                'div',
+                { className: 'dshdrawio_healthBody' },
+                h('small', { className: 'dshdrawio_healthLabel' }, tile.label),
+                h('strong', { className: 'dshdrawio_healthValue' }, tile.value),
+                h('p', { className: 'dshdrawio_healthDetail' }, tile.detail),
+              ),
+            ),
+          ),
         ),
         h(
           'div',
           { className: 'dshdrawio_body' },
+          // File list as one rounded card column, mnemon-style.
           h(
             'div',
             { className: 'dshdrawio_list' },
-            h('div', { className: 'dshdrawio_listHead' }, t('list.title')),
+            h(
+              'div',
+              { className: 'dshdrawio_sectionHeading' },
+              h('h3', { className: 'dshdrawio_sectionTitle' }, t('list.title')),
+              h('span', { className: 'dshdrawio_sectionMeta' }, t('stats.filesDetail')),
+            ),
             listLoading && files.length === 0 ? h('div', { className: 'dshdrawio_small', style: { padding: '6px 8px' } }, t('list.loading')) : null,
             listError !== null
               ? h(
@@ -606,11 +726,11 @@ window.__ModuleLoader__.load({
                 )
               : null,
             !listLoading && listError === null && rows.length === 0
-              ? h('div', { className: 'dshdrawio_small', style: { padding: '6px 8px' } }, t('list.empty'))
+              ? h('div', { className: 'dshdrawio_small', style: { padding: '10px 12px' } }, t('list.empty'))
               : null,
-            rows,
+            h('div', { className: 'dshdrawio_fileCard' }, rows),
           ),
-          h('div', { className: 'dshdrawio_stage' }, stage),
+          h('div', { className: 'dshdrawio_stage' }, h('div', { className: 'dshdrawio_stageCard' }, stage)),
         ),
       )
     }
@@ -804,13 +924,41 @@ window.__ModuleLoader__.load({
     return {
       inject: ['slots', 'locale'],
       apply(ctx) {
+        // The stylesheet: without inserting it, every class below is inert and
+        // the panel renders as raw HTML. Mirrors dsh-mnemon's approach — a
+        // <style data-plugin-css> tag keyed by id so remounts reuse it —
+        // because the `styles` builtin is not reachable from this module scope.
+        ctx.effect(() => {
+          if (typeof document === 'undefined') return () => {}
+          const tagId = 'dsh-drawio/client.css'
+          let tag = document.querySelector(`style[data-plugin-css="${tagId}"]`)
+          if (tag === null) {
+            tag = document.createElement('style')
+            tag.dataset.pluginCss = tagId
+            document.head.appendChild(tag)
+          }
+          const previous = tag.textContent
+          if (previous !== CSS) tag.textContent = CSS
+          return () => {
+            // Keep the tag on unload: other registrations may share the page,
+            // and remount re-runs this effect anyway.
+            if (tag.textContent === CSS) tag.textContent = previous ?? ''
+          }
+        }, 'sorarisu-dsh-drawio: stylesheet')
         ctx.effect(() => ctx.locale.register(NS, { zh: ZH, en: EN }), 'sorarisu-dsh-drawio: dictionaries')
         // `layout` is optional (a composition without a right sidebar still runs);
         // hold a lazy getter so the cards can focus the panel on click.
         ctxLayoutRef = () => ctx.get('layout')
-        // `bind` returns the same function per namespace, so `t` can ride the
-        // inject face without breaking the slot registry's memoization.
-        const t = ctx.locale.bind(NS)
+        // Self-contained translate: read the active locale from the service but
+        // always fall back to our own dictionaries. The service's register/
+        // lookup path has failed open before (raw keys in the panel); a local
+        // dict cannot. Registration above stays for the shared vocabulary.
+        const t = (key, params) => {
+          const active = ctx.locale?.getLocale?.().active ?? 'zh'
+          const template = (active === 'en' ? EN : ZH)[key] ?? ZH[key] ?? EN[key] ?? key
+          if (params === undefined) return template
+          return String(template).replace(/\{(\w+)\}/gu, (match, name) => (name in params ? String(params[name]) : match))
+        }
 
         ctx.slots.inject('sidebar.panellist', () =>
           ctx.slots.register(
@@ -859,7 +1007,7 @@ window.__ModuleLoader__.load({
           return ctx.slots.register(
             {
               name: 'sidebar.right.pane.tab',
-              id: 'drawio-preview',
+              key: 'drawio-preview',
               order: 30,
               label: () => t('panel.title'),
               locale: NS,

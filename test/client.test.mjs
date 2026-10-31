@@ -137,12 +137,12 @@ function createClientContext(React) {
       register(options, component) {
         if (options.name === 'main') panels.set(options.key, { options, component })
         else if (options.name === 'tool.call.toolview') toolviews.set(options.key, { options, component })
-        else if (options.name === 'sidebar.right.pane.tab') rightTabs.set(options.id, { options, component })
+        else if (options.name === 'sidebar.right.pane.tab') rightTabs.set(options.key, { options, component })
         else rows.set(options.id, { options, component })
         return () => {
           if (options.name === 'main') panels.delete(options.key)
           else if (options.name === 'tool.call.toolview') toolviews.delete(options.key)
-          else if (options.name === 'sidebar.right.pane.tab') rightTabs.delete(options.id)
+          else if (options.name === 'sidebar.right.pane.tab') rightTabs.delete(options.key)
           else rows.delete(options.id)
         }
       },
@@ -212,7 +212,11 @@ const listeners = []
 /** Minimal browser globals the panel touches. */
 function installDomStub() {
   const documentStub = {
-    createElement: () => ({ href: '', download: '', click() {} }),
+    createElement: () => ({ href: '', download: '', click() {}, dataset: {} }),
+    // Style injection looks an existing tag up before appending; hand back a
+    // mutable stub so the effect runs both branches.
+    querySelector: () => null,
+    head: { appendChild() {} },
     documentElement: {
       getAttribute: () => null,
       style: {},
@@ -582,7 +586,8 @@ async function main() {
 
     // right pane: registered as a tab
     const pane = fresh.rightTabs.get('drawio-preview')
-    assert.ok(pane !== undefined, 'expected a sidebar.right.pane.tab entry')
+    assert.ok(pane !== undefined, 'expected a sidebar.right.pane.tab entry keyed drawio-preview')
+    assert.equal(pane.options.key, 'drawio-preview')
   })
 
   await rm(workspace, { recursive: true, force: true })
