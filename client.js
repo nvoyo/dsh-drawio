@@ -28,6 +28,9 @@ window.__ModuleLoader__.load({
     /** The id of the main panel and of its sidebar entry; they must match. */
     const PANEL_ID = 'drawio'
 
+    /** The tool name whose chat card this client renders; must match lib/tool.js. */
+    const TOOL_NAME = 'drawio'
+
     /** Sidebar position: after the shipped plugin/schedule icons. */
     const PANEL_ORDER = 40
 
@@ -83,34 +86,56 @@ window.__ModuleLoader__.load({
     /** Stylesheet, token-only so it follows the host theme. */
     const CSS = `
 .dshdrawio_main{box-sizing:border-box;height:100%;min-height:0;display:flex;flex-direction:column;background:var(--dsw-alias-bg-base);color:var(--dsw-alias-label-primary);font-size:13px}
-.dshdrawio_head{display:flex;align-items:center;gap:8px;padding:10px 16px;border-bottom:0.5px solid var(--dsw-alias-border-l1);flex:none}
-.dshdrawio_headTitle{font-size:13px;font-weight:600;margin-right:auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dshdrawio_head{display:flex;align-items:center;gap:10px;padding:12px 20px;border-bottom:0.5px solid var(--dsw-alias-border-l1);flex:none;min-height:52px}
+.dshdrawio_headTitle{font-size:14px;font-weight:600;letter-spacing:0.2px;margin-right:auto;display:flex;align-items:center;gap:8px}
+.dshdrawio_headIcon{width:18px;height:18px;color:var(--dsw-alias-brand-primary);flex:none}
 .dshdrawio_body{flex:1;min-height:0;display:flex}
-.dshdrawio_list{width:236px;flex:none;border-right:0.5px solid var(--dsw-alias-border-l1);overflow-y:auto;padding:6px}
-.dshdrawio_listHead{font-size:11px;color:var(--dsw-alias-label-secondary);padding:6px 8px 4px}
-.dshdrawio_row{display:flex;flex-direction:column;gap:2px;width:100%;text-align:left;padding:7px 8px;border:0;border-radius:6px;background:transparent;color:inherit;cursor:pointer;font:inherit}
+.dshdrawio_list{width:260px;flex:none;border-right:0.5px solid var(--dsw-alias-border-l1);overflow-y:auto;padding:10px 8px;background:var(--dsw-alias-bg-layer-1)}
+.dshdrawio_listHead{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;color:var(--dsw-alias-label-secondary);padding:4px 10px 8px}
+.dshdrawio_row{position:relative;display:flex;flex-direction:column;gap:3px;width:100%;text-align:left;padding:9px 12px;border:0;border-radius:8px;background:transparent;color:inherit;cursor:pointer;font:inherit;transition:background 120ms ease}
 .dshdrawio_row:hover{background:var(--dsw-alias-bg-layer-2)}
-.dshdrawio_row[data-active="true"]{background:var(--dsw-alias-bg-layer-2);box-shadow:inset 2px 0 0 var(--dsw-alias-brand-primary)}
-.dshdrawio_rowName{font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dshdrawio_row[data-active="true"]{background:var(--dsw-alias-bg-layer-2)}
+.dshdrawio_row[data-active="true"]::before{content:'';position:absolute;left:0;top:8px;bottom:8px;width:3px;border-radius:2px;background:var(--dsw-alias-brand-primary)}
+.dshdrawio_rowName{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dshdrawio_row[data-active="true"] .dshdrawio_rowName{color:var(--dsw-alias-brand-primary)}
 .dshdrawio_rowMeta{font-size:11px;color:var(--dsw-alias-label-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .dshdrawio_stage{flex:1;min-width:0;min-height:0;display:flex;flex-direction:column;position:relative;background:var(--dsw-alias-bg-layer-1)}
-.dshdrawio_toolbar{display:flex;align-items:center;gap:6px;padding:6px 10px;border-bottom:0.5px solid var(--dsw-alias-border-l1);flex:none;flex-wrap:wrap}
-.dshdrawio_btn{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;font:inherit;font-size:12px;border-radius:6px;border:0.5px solid var(--dsw-alias-border-l2);background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-label-primary);cursor:pointer}
+.dshdrawio_toolbar{display:flex;align-items:center;gap:8px;padding:8px 14px;border-bottom:0.5px solid var(--dsw-alias-border-l1);flex:none;flex-wrap:wrap;background:var(--dsw-alias-bg-base)}
+.dshdrawio_btn{display:inline-flex;align-items:center;gap:5px;padding:5px 12px;font:inherit;font-size:12.5px;border-radius:7px;border:0.5px solid var(--dsw-alias-border-l2);background:var(--dsw-alias-bg-layer-2);color:var(--dsw-alias-label-primary);cursor:pointer;transition:background 120ms ease,opacity 120ms ease}
 .dshdrawio_btn:hover{background:var(--dsw-alias-bg-overlay)}
-.dshdrawio_btn:disabled{opacity:.5;cursor:default}
+.dshdrawio_btn:disabled{opacity:.45;cursor:default}
 .dshdrawio_btnPrimary{border-color:transparent;background:var(--dsw-alias-brand-primary);color:#fff}
-.dshdrawio_btnPrimary:hover{background:var(--dsw-alias-brand-primary);opacity:.92}
-.dshdrawio_hint{font-size:11px;color:var(--dsw-alias-label-secondary);margin-left:auto}
-.dshdrawio_dot{width:6px;height:6px;border-radius:50%;background:var(--dsw-alias-state-warn-primary);display:inline-block;margin-right:4px}
+.dshdrawio_btnPrimary:hover{background:var(--dsw-alias-brand-primary);opacity:.9}
+.dshdrawio_hint{font-size:11.5px;color:var(--dsw-alias-label-secondary);margin-left:auto;display:inline-flex;align-items:center;gap:5px;min-width:0;overflow:hidden}
+.dshdrawio_path{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dshdrawio_dot{width:6px;height:6px;border-radius:50%;background:var(--dsw-alias-state-warn-primary);display:inline-block;flex:none}
 .dshdrawio_frameWrap{flex:1;min-height:0;position:relative;background:var(--dsw-alias-bg-base)}
 .dshdrawio_frame{width:100%;height:100%;border:0;display:block;background:#fff}
-.dshdrawio_overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:24px;text-align:center;color:var(--dsw-alias-label-secondary);background:var(--dsw-alias-bg-base)}
-.dshdrawio_preview{position:absolute;inset:0;overflow:auto;display:flex;align-items:flex-start;justify-content:center;padding:16px;background:var(--dsw-alias-bg-base)}
-.dshdrawio_preview img{max-width:100%;height:auto;border:0.5px solid var(--dsw-alias-border-l1);border-radius:6px;background:#fff}
-.dshdrawio_empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:var(--dsw-alias-label-secondary);padding:32px;text-align:center}
-.dshdrawio_emptyTitle{font-size:14px;color:var(--dsw-alias-label-primary)}
-.dshdrawio_error{color:var(--dsw-alias-state-error-primary);font-size:12px;padding:6px 10px}
-.dshdrawio_small{font-size:11px;color:var(--dsw-alias-label-secondary)}
+.dshdrawio_overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:24px;text-align:center;color:var(--dsw-alias-label-secondary);background:var(--dsw-alias-bg-base)}
+.dshdrawio_preview{position:absolute;inset:0;overflow:auto;display:flex;align-items:flex-start;justify-content:center;padding:20px;background:var(--dsw-alias-bg-base)}
+.dshdrawio_canvas{max-width:100%;border-radius:10px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.08),0 4px 16px rgba(0,0,0,.06);overflow:hidden}
+.dshdrawio_canvas img,.dshdrawio_canvas svg{display:block;width:100%;height:auto}
+.dshdrawio_empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:var(--dsw-alias-label-secondary);padding:32px;text-align:center}
+.dshdrawio_emptyGlyph{font-size:34px;opacity:.45;line-height:1}
+.dshdrawio_emptyTitle{font-size:14.5px;font-weight:500;color:var(--dsw-alias-label-primary)}
+.dshdrawio_error{color:var(--dsw-alias-state-error-primary);font-size:12.5px;padding:6px 10px}
+.dshdrawio_small{font-size:11.5px;color:var(--dsw-alias-label-secondary)}
+/* chat-side inline preview */
+.dshdrawio_chat{border:0.5px solid var(--dsw-alias-border-l1);border-radius:10px;overflow:hidden;background:var(--dsw-alias-bg-layer-1);max-width:640px}
+.dshdrawio_chatHead{display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:0.5px solid var(--dsw-alias-border-l1);font-size:12px;color:var(--dsw-alias-label-secondary);background:var(--dsw-alias-bg-layer-2)}
+.dshdrawio_chatHeadTitle{font-weight:600;color:var(--dsw-alias-label-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dshdrawio_chatMeta{margin-left:auto;flex:none}
+.dshdrawio_chatBody{background:#fff;display:flex;justify-content:center}
+.dshdrawio_chatBody img,.dshdrawio_chatBody svg{display:block;width:100%;height:auto;max-height:420px;object-fit:contain}
+.dshdrawio_chatFoot{display:flex;gap:10px;padding:7px 12px;border-top:0.5px solid var(--dsw-alias-border-l1);font-size:11.5px;color:var(--dsw-alias-label-secondary);background:var(--dsw-alias-bg-layer-2)}
+.dshdrawio_chatLink{color:var(--dsw-alias-brand-primary);text-decoration:none;cursor:pointer}
+.dshdrawio_chatLink:hover{text-decoration:underline}
+/* right-sidebar tab body */
+.dshdrawio_right{box-sizing:border-box;height:100%;min-height:0;overflow:auto;padding:12px;display:flex;flex-direction:column;gap:10px;background:var(--dsw-alias-bg-base);color:var(--dsw-alias-label-primary)}
+.dshdrawio_rightTitle{font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dshdrawio_rightCard{border:0.5px solid var(--dsw-alias-border-l1);border-radius:10px;overflow:hidden;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.dshdrawio_rightCard img,.dshdrawio_rightCard svg{display:block;width:100%;height:auto}
+.dshdrawio_rightEmpty{color:var(--dsw-alias-label-secondary);font-size:12px;padding:16px;text-align:center;border:0.5px dashed var(--dsw-alias-border-l2);border-radius:10px}
 `
 
     /** The panel's icon in the sidebar rail. */
@@ -530,11 +555,15 @@ window.__ModuleLoader__.load({
               : h(
                   'div',
                   { className: 'dshdrawio_preview' },
-                  h('img', {
-                    key: previewKey,
-                    src: `${API}/preview?path=${encodeURIComponent(active.path)}&v=${previewKey}`,
-                    alt: `${active.path}`,
-                  }),
+                  h(
+                    'div',
+                    { className: 'dshdrawio_canvas' },
+                    h('img', {
+                      key: previewKey,
+                      src: `${API}/preview?path=${encodeURIComponent(active.path)}&v=${previewKey}`,
+                      alt: `${active.path}`,
+                    }),
+                  ),
                 ),
           ),
         )
@@ -546,7 +575,12 @@ window.__ModuleLoader__.load({
         h(
           'div',
           { className: 'dshdrawio_head' },
-          h('span', { className: 'dshdrawio_headTitle' }, t('panel.title')),
+          h(
+            'span',
+            { className: 'dshdrawio_headTitle' },
+            h(PanelIcon, { size: 18 }),
+            t('panel.title'),
+          ),
           h(
             'button',
             { type: 'button', className: 'dshdrawio_btn', onClick: () => void refreshList() },
@@ -581,10 +615,199 @@ window.__ModuleLoader__.load({
       )
     }
 
+    /**
+     * The result text of a settled call, when it is exactly one text block —
+     * the same rule the host's generic card uses.
+     */
+    function singleResultText(block) {
+      if (block === undefined || !Array.isArray(block.content) || block.content.length !== 1) return undefined
+      const only = block.content[0]
+      return only !== null && typeof only === 'object' && only.type === 'text' ? only.text : undefined
+    }
+
+    /**
+     * Which path a `drawio` tool call touched, read out of the result block.
+     *
+     * The tool renders its own result text; the first line is
+     * `<action> → <path>` for mutations and `read → <path>` otherwise. Rather
+     * than parse display text, pull `path` straight from the rendered envelope:
+     * the tool result content is the rendered text, so parse the envelope tag.
+     *
+     * @param {object} block - the call's result (or start) block.
+     * @returns {{ path: string, action: string } | undefined}
+     */
+    function drawioCallTarget(block) {
+      if (block === undefined || block === null) return undefined
+      const parsed = typeof block.call === 'object' && block.call !== null ? block.call : undefined
+      const args = parsed !== undefined && typeof parsed.args === 'object' && parsed.args !== null ? parsed.args : undefined
+      if (args === undefined || typeof args.path !== 'string' || args.path.length === 0) return undefined
+      return { path: args.path, action: typeof args.action === 'string' ? args.action : 'read' }
+    }
+
+    /**
+     * One draw.io tool call, rendered in the chat as the diagram itself.
+     *
+     * Replaces the generic tool card for `key: 'drawio'`: while the call runs it
+     * shows a placeholder, and once the result settles it shows the SVG preview
+     * with a link into the panel.
+     */
+    function DrawioChatCard(props) {
+      const t = typeof props.t === 'function' ? props.t : (key) => key
+      const block = props.block
+      const settled = props.phase === 'result' && block !== undefined && Array.isArray(block.content)
+      const target = settled ? drawioCallTarget(block) : undefined
+      const resultText = settled ? singleResultText(block) : undefined
+      const [previewKey, setPreviewKey] = React.useState(0)
+      const [failed, setFailed] = React.useState(false)
+
+      // A settled call whose file exists on disk can be previewed; if the tool
+      // errored (isError on the model-facing result), fall back to the text.
+      const errored = settled && typeof resultText === 'string' && resultText.length > 0 && !resultText.includes('→')
+      const path = target?.path
+
+      React.useEffect(() => {
+        if (path === undefined) return undefined
+        setFailed(false)
+        const controller = new AbortController()
+        void fetch(`${API}/preview?path=${encodeURIComponent(path)}`, { signal: controller.signal })
+          .then((response) => {
+            if (!response.ok) setFailed(true)
+          })
+          .catch(() => setFailed(true))
+        return () => controller.abort()
+      }, [path, previewKey])
+
+      if (!settled) {
+        return h(
+          'div',
+          { className: 'dshdrawio_chat' },
+          h(
+            'div',
+            { className: 'dshdrawio_chatHead' },
+            h('span', { className: 'dshdrawio_chatHeadTitle' }, t('panel.title')),
+            h('span', { className: 'dshdrawio_chatMeta' }, '…'),
+          ),
+          h('div', { className: 'dshdrawio_chatBody', style: { minHeight: 80, color: '#888', alignItems: 'center', background: 'var(--dsw-alias-bg-layer-1)' } }, h('span', null, '…')),
+        )
+      }
+      if (path === undefined || failed || errored) {
+        // Not a file preview we can draw (error, list, delete): show the text.
+        return h(
+          'div',
+          { className: 'dshdrawio_chat' },
+          h(
+            'div',
+            { className: 'dshdrawio_chatHead' },
+            h('span', { className: 'dshdrawio_chatHeadTitle' }, `drawio ${target?.action ?? ''}`.trim()),
+          ),
+          h('div', { className: 'dshdrawio_chatFoot' }, h('span', null, (resultText ?? '').split('\n').slice(0, 6).join('\n'))),
+        )
+      }
+      return h(
+        'div',
+        { className: 'dshdrawio_chat' },
+        h(
+          'div',
+          { className: 'dshdrawio_chatHead' },
+          h(PanelIcon, { size: 14 }),
+          h('span', { className: 'dshdrawio_chatHeadTitle' }, path),
+          h('span', { className: 'dshdrawio_chatMeta' }, `${target?.action ?? ''}`),
+        ),
+        h(
+          'div',
+          { className: 'dshdrawio_chatBody' },
+          h('img', {
+            key: previewKey,
+            src: `${API}/preview?path=${encodeURIComponent(path)}&v=${previewKey}`,
+            alt: path,
+          }),
+        ),
+        h(
+          'div',
+          { className: 'dshdrawio_chatFoot' },
+          h(
+            'button',
+            { type: 'button', className: 'dshdrawio_chatLink', onClick: () => void ctxOpenPanel(PANEL_ID) },
+            t('action.open'),
+          ),
+        ),
+      )
+    }
+
+    /**
+     * Open the central `drawio` panel. `layout` is optional in the composition,
+     * so go through `ctx.get()` inside the component's render closure.
+     */
+    let ctxLayoutRef = null
+
+    function ctxOpenPanel(panelId) {
+      const layout = typeof ctxLayoutRef === 'function' ? ctxLayoutRef() : ctxLayoutRef
+      if (layout !== null && layout !== undefined && typeof layout.selectPanel === 'function') {
+        layout.selectPanel(panelId)
+        return
+      }
+      console.warn('dsh-drawio: layout service unavailable; cannot focus the panel')
+    }
+
+    /** The right-sidebar pane: the most recently touched diagram, always mounted. */
+    function DrawioRightPane(props) {
+      const t = typeof props.t === 'function' ? props.t : (key) => key
+      const [latest, setLatest] = React.useState(null)
+      const [previewKey, setPreviewKey] = React.useState(0)
+
+      const loadLatest = React.useCallback(async () => {
+        try {
+          const payload = await callApi('/list?recursive=1')
+          const files = Array.isArray(payload.files) ? payload.files : []
+          setLatest(files.length > 0 ? files[0] : null)
+        } catch {
+          setLatest(null)
+        }
+      }, [])
+
+      React.useEffect(() => {
+        void loadLatest()
+      }, [loadLatest])
+
+      return h(
+        'div',
+        { className: 'dshdrawio_right' },
+        h('div', { className: 'dshdrawio_rightTitle' }, t('panel.title')),
+        latest === null
+          ? h('div', { className: 'dshdrawio_rightEmpty' }, t('list.empty'))
+          : h(
+              React.Fragment,
+              null,
+              h(
+                'div',
+                { className: 'dshdrawio_rightCard' },
+                h('img', {
+                  key: previewKey,
+                  src: `${API}/preview?path=${encodeURIComponent(latest.path)}&v=${previewKey}`,
+                  alt: latest.path,
+                }),
+              ),
+              h(
+                'button',
+                {
+                  type: 'button',
+                  className: 'dshdrawio_btn',
+                  style: { alignSelf: 'flex-start' },
+                  onClick: () => void ctxOpenPanel(PANEL_ID),
+                },
+                t('action.open'),
+              ),
+            ),
+      )
+    }
+
     return {
       inject: ['slots', 'locale'],
       apply(ctx) {
         ctx.effect(() => ctx.locale.register(NS, { zh: ZH, en: EN }), 'sorarisu-dsh-drawio: dictionaries')
+        // `layout` is optional (a composition without a right sidebar still runs);
+        // hold a lazy getter so the cards can focus the panel on click.
+        ctxLayoutRef = () => ctx.get('layout')
         // `bind` returns the same function per namespace, so `t` can ride the
         // inject face without breaking the slot registry's memoization.
         const t = ctx.locale.bind(NS)
@@ -614,6 +837,35 @@ window.__ModuleLoader__.load({
               inject: () => ({ t }),
             },
             DrawioPanel,
+          )
+        })
+
+        // Chat-inline preview: whenever the `drawio` tool call appears in the
+        // conversation, render the diagram itself instead of the generic card.
+        ctx.slots.inject('tool.call.toolview', () => {
+          return ctx.slots.register(
+            {
+              name: 'tool.call.toolview',
+              key: TOOL_NAME,
+              locale: NS,
+              inject: () => ({ t }),
+            },
+            DrawioChatCard,
+          )
+        })
+
+        // Right-sidebar tab (dsh-better-sidebar): the latest diagram, always visible.
+        ctx.slots.inject('sidebar.right.pane.tab', () => {
+          return ctx.slots.register(
+            {
+              name: 'sidebar.right.pane.tab',
+              id: 'drawio-preview',
+              order: 30,
+              label: () => t('panel.title'),
+              locale: NS,
+              inject: () => ({ t }),
+            },
+            DrawioRightPane,
           )
         })
       },
