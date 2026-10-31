@@ -99,6 +99,8 @@ Be aware of exactly what this plugin touches:
 
 ## Compatibility and known limits
 
+- **DeepSeek Harness `>=0.2.0-rc.1 <0.3.0-0`** (declared in the manifest `engines.dsh`; built and tested on 0.2.1-rc.5)
+- **Node.js `^22.19.0 || >=24.0.0`** (declared in the manifest `engines.node`)
 - Web profile only; the client half targets the Harness Web UI.
 - Only the **first page** of a multi-page `<mxfile>` is edited. Other pages are preserved byte-for-byte
   but not operated on.

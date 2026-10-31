@@ -1,6 +1,6 @@
 {
   "name": "@sorarisu/dsh-drawio",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": false,
   "type": "module",
   "description": "draw.io diagrams for DeepSeek Harness: an agent tool that writes .drawio files, plus a sidebar panel with an embedded draw.io editor and an offline SVG preview.",
@@ -13,10 +13,10 @@
   "files": [
     "index.js",
     "client.js",
-    "lib",
-    "cordis.patch.yml",
-    "locale/*.json",
+    "lib/",
+    "locale/",
     "icon.svg",
+    "cordis.patch.yml",
     "README.md",
     "README.zh.md"
   ],
@@ -30,9 +30,14 @@
         "@deepseek-ai/dsh-client-locale",
         "@deepseek-ai/dsh-client-ui-sidebar"
       ]
+    },
+    "permissions": {
+      "filesystem": "read-write within registered DSH workspaces only (.drawio files)",
+      "network": "local loopback HTTP routes for the panel; the embedded editor iframe loads https://embed.diagrams.net (draw.io official embed build) — diagram data never leaves the browser and the local Host",
+      "telemetry": "none"
     }
   },
-  "license": "AGPL-3.0-only",
+  "license": "AGPL-3.0",
   "keywords": [
     "dsh",
     "dsh-plugin",
@@ -46,14 +51,15 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Nvoyo/dsh-drawio.git"
+    "url": "git+https://github.com/nvoyo/dsh-drawio.git"
   },
-  "homepage": "https://github.com/Nvoyo/dsh-drawio#readme",
+  "homepage": "https://github.com/nvoyo/dsh-drawio#readme",
   "bugs": {
-    "url": "https://github.com/Nvoyo/dsh-drawio/issues"
+    "url": "https://github.com/nvoyo/dsh-drawio/issues"
   },
   "engines": {
-    "node": ">=22.6"
+    "dsh": ">=0.2.0-rc.1 <0.3.0-0",
+    "node": "^22.19.0 || >=24.0.0"
   },
   "author": "Nvoyo"
 }
