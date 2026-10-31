@@ -1,0 +1,9 @@
+node_modules/
+*.tgz
+.DS_Store
+
+# 本地发布配置：npm login 之后这里会出现 _authToken，绝不能进仓库
+.npmrc
+
+# 发布手册只留本地，不提交、不打包
+PUBLISH.zh.md

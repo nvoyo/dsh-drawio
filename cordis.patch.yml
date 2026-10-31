@@ -1,0 +1,15 @@
+# Loader patch for the @sorarisu/dsh-drawio bundle.
+#
+# One row inserts the package into the running Host composition. The `config`
+# block is passed verbatim to `apply(ctx, config)` in index.js, so every value
+# here is optional and the defaults live in code.
+- insert:
+    - id: sorarisu-dsh-drawio
+      name: '@sorarisu/dsh-drawio'
+      config:
+        # Default directory offered by the panel when the Host exposes no
+        # workspace registry. Relative paths resolve against the Host process
+        # working directory.
+        rootDir: .
+        # Maximum accepted size of one diagram document (characters).
+        maxDocumentBytes: 8388608

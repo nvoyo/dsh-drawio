@@ -1,0 +1,13 @@
+# 复制成 .npmrc 使用：cp npmrc.example .npmrc
+#
+# 为什么需要它：国内镜像（registry.npmmirror.com）是只读副本，
+# 对发布请求返回 422 拒绝，所以发布必须直连 npm 官方源。
+# 这里的配置只作用于本包目录，不影响您在其他地方 npm install（仍走镜像）。
+
+registry=https://registry.npmjs.org/
+
+# scope 包默认私有，必须显式公开
+access=public
+
+# 登录后 npm 会在这里或 ~/.npmrc 追加：
+# //registry.npmjs.org/:_authToken=***
