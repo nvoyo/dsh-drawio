@@ -40,6 +40,7 @@ window.__ModuleLoader__.load({
       'panel.description': '用 draw.io 画流程图、时序图、组织架构图——模型与您在同一批 .drawio 文件上协作。',
       'panel.subtitle': '未选择文件',
       'preview.failed': '预览加载失败：文件可能已被移动或删除。',
+      'preview.zoomHint': 'Ctrl + 滚轮缩放；滚轮/拖动滚动查看长图',
       'stats.engine': '引擎',
       'stats.engineDetail': 'dsh-drawio 插件运行中',
       'stats.files': '图表文件',
@@ -63,7 +64,8 @@ window.__ModuleLoader__.load({
       'action.export': '导出 SVG',
       'action.close': '关闭编辑器',
       'editor.loading': '正在载入 draw.io 编辑器…',
-      'editor.failed': '编辑器没能载入（可能是网络问题）。可以先看下面的预览图，或在新窗口打开。',
+      'editor.failed': '编辑器没能载入（可能是网络或 Firefox 跟踪保护拦截）。',
+      'editor.openStandalone': '在新窗口打开 draw.io',
       'empty.headline': '选一个文件开始',
       'empty.body': '左边列表里挑一个 .drawio 文件，这里会显示预览和编辑器。',
       'new.prompt': '新文件名（不含扩展名）',
@@ -76,6 +78,7 @@ window.__ModuleLoader__.load({
       'panel.description': 'Flowcharts, sequence diagrams, and org charts with draw.io — the agent and you share one set of .drawio files.',
       'panel.subtitle': 'No file selected',
       'preview.failed': 'Preview failed to load: the file may have moved or been deleted.',
+      'preview.zoomHint': 'Ctrl + wheel to zoom; scroll or drag to pan a tall diagram',
       'stats.engine': 'Engine',
       'stats.engineDetail': 'dsh-drawio plugin running',
       'stats.files': 'Diagram files',
@@ -99,7 +102,8 @@ window.__ModuleLoader__.load({
       'action.export': 'Export SVG',
       'action.close': 'Close editor',
       'editor.loading': 'Loading the draw.io editor…',
-      'editor.failed': 'The editor could not load (likely a network issue). Use the preview below or open it in a new window.',
+      'editor.failed': 'The editor could not load (network or Firefox tracking protection).',
+      'editor.openStandalone': 'Open draw.io in a new window',
       'empty.headline': 'Pick a file to start',
       'empty.body': 'Choose a .drawio file on the left; its preview and editor appear here.',
       'new.prompt': 'New file name (without extension)',
@@ -108,10 +112,15 @@ window.__ModuleLoader__.load({
     }
 
     /** Stylesheet, token-only so it follows the host theme. */
+    /** Whether the stylesheet tag is live; drives the panel's self-check banner. */
+    let stylesInjected = false
+
     const CSS = `
 .dshdrawio_main{box-sizing:border-box;width:100%;min-height:100%;margin:0 auto;padding:24px 28px 48px;background:
   radial-gradient(1200px 400px at 85% -10%, color-mix(in srgb, var(--dsw-alias-brand-primary) 7%, transparent), transparent 70%),
   var(--dsw-alias-bg-base);color:var(--dsw-alias-label-primary);font-size:13px}
+.dshdrawio_selfcheck{display:inline-block;margin:-8px 0 10px;padding:2px 10px;border-radius:999px;font-size:11px;font-family:ui-monospace,monospace;border:0.5px solid var(--dsw-alias-border-l2);color:var(--dsw-alias-label-secondary)}
+.dshdrawio_selfcheck[data-ok="false"]{color:var(--dsw-alias-state-error-primary);border-color:var(--dsw-alias-state-error-primary)}
 .dshdrawio_pageHeader{display:flex;justify-content:space-between;align-items:flex-start;gap:16px 24px;margin-bottom:20px;flex-wrap:wrap}
 .dshdrawio_pageHeaderText h2{margin:0;font-size:22px;font-weight:700;line-height:28px;letter-spacing:-0.2px}
 .dshdrawio_pageHeaderText p{margin:6px 0 0;color:var(--dsw-alias-label-secondary);font-size:13px;line-height:20px;max-width:60ch}
@@ -154,12 +163,12 @@ window.__ModuleLoader__.load({
 .dshdrawio_btnPrimary:hover{background:var(--dsw-alias-brand-primary);opacity:.92}
 .dshdrawio_hint{font-size:11.5px;color:var(--dsw-alias-label-secondary);margin-left:auto;display:inline-flex;align-items:center;gap:5px;min-width:0;overflow:hidden}
 .dshdrawio_dot{width:7px;height:7px;border-radius:50%;background:var(--dsw-alias-state-warn-primary);display:inline-block;flex:none;box-shadow:0 0 0 3px color-mix(in srgb, var(--dsw-alias-state-warn-primary) 18%, transparent)}
-.dshdrawio_frameWrap{flex:1;min-height:0;position:relative;background:
+.dshdrawio_frameWrap{flex:1;min-height:420px;position:relative;background:
   linear-gradient(180deg, color-mix(in srgb, var(--dsw-alias-bg-layer-2) 55%, var(--dsw-alias-bg-base)), var(--dsw-alias-bg-base));}
 .dshdrawio_frame{width:100%;height:100%;border:0;display:block;background:#fff}
 .dshdrawio_overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:24px;text-align:center;color:var(--dsw-alias-label-secondary);background:var(--dsw-alias-bg-layer-1)}
 .dshdrawio_preview{flex:1;min-height:0;overflow:auto;display:flex;align-items:flex-start;justify-content:center;padding:24px;background:var(--dsw-alias-bg-base)}
-.dshdrawio_canvas{max-width:100%;border-radius:12px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.08),0 8px 28px rgba(0,0,0,.07);overflow:hidden}
+.dshdrawio_canvas{border-radius:12px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.08),0 8px 28px rgba(0,0,0,.07);overflow:hidden}
 .dshdrawio_canvas img,.dshdrawio_canvas svg{display:block;width:100%;height:auto}
 .dshdrawio_empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--dsw-alias-label-secondary);padding:40px;text-align:center}
 .dshdrawio_emptyGlyph{font-size:40px;opacity:.4;line-height:1}
@@ -177,7 +186,7 @@ window.__ModuleLoader__.load({
 .dshdrawio_chatLink{color:var(--dsw-alias-brand-primary);text-decoration:none;cursor:pointer;background:none;border:0;font:inherit;padding:0}
 .dshdrawio_chatLink:hover{text-decoration:underline}
 /* right-sidebar tab body */
-.dshdrawio_right{box-sizing:border-box;height:100%;min-height:0;overflow:auto;padding:14px;display:flex;flex-direction:column;gap:10px;background:var(--dsw-alias-bg-base);color:var(--dsw-alias-label-primary)}
+.dshdrawio_right{box-sizing:border-box;height:100%;min-height:0;padding:14px;display:flex;flex-direction:column;gap:10px;background:var(--dsw-alias-bg-base);color:var(--dsw-alias-label-primary)}
 .dshdrawio_rightTitle{font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .dshdrawio_rightCard{border:0.5px solid var(--dsw-alias-border-l1);border-radius:12px;overflow:hidden;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.06)}
 .dshdrawio_rightCard img,.dshdrawio_rightCard svg{display:block;width:100%;height:auto}
@@ -324,7 +333,7 @@ window.__ModuleLoader__.load({
         window.addEventListener('message', onMessage)
         const timeout = window.setTimeout(() => {
           setStatus((current) => (current === 'ready' ? current : 'failed'))
-        }, 15000)
+        }, 8000)
         return () => {
           window.clearTimeout(timeout)
           window.removeEventListener('message', onMessage)
@@ -360,6 +369,16 @@ window.__ModuleLoader__.load({
               },
               props.t('list.retry'),
             ),
+            h(
+              'a',
+              {
+                className: 'dshdrawio_btn',
+                href: editorUrl(embedOrigin, dark),
+                target: '_blank',
+                rel: 'noreferrer',
+              },
+              props.t('editor.openStandalone'),
+            ),
           ),
       )
     }
@@ -373,6 +392,8 @@ window.__ModuleLoader__.load({
      */
     function DrawioPanel(props) {
       const t = typeof props.t === 'function' ? props.t : (key) => key
+      const selfCheckOk = stylesInjected
+      const getService = typeof props.getService === 'function' ? props.getService : () => undefined
       const [files, setFiles] = React.useState([])
       const [listError, setListError] = React.useState(null)
       const [listLoading, setListLoading] = React.useState(true)
@@ -580,7 +601,14 @@ window.__ModuleLoader__.load({
               {
                 type: 'button',
                 className: 'dshdrawio_btn',
-                onClick: () => setEditorOpen((open) => !open),
+                onClick: () => {
+                  // Prefer the right-sidebar editor when available: it keeps
+                  // the conversation visible while editing. Falls back to the
+                  // in-panel editor when better-sidebar is absent or refuses.
+                  const service = getService('betterSidebar')
+                  const routed = service !== null && service !== undefined && openSidebarEditor(service, active.path)
+                  if (!routed) setEditorOpen((open) => !open)
+                },
               },
               editorOpen ? t('action.close') : t('action.open'),
             ),
@@ -630,28 +658,14 @@ window.__ModuleLoader__.load({
                   onDirty: markDirty,
                   onError: onEditorError,
                 })
-              : h(
-                  'div',
-                  { className: 'dshdrawio_preview' },
-                  h(
-                    'div',
-                    { className: 'dshdrawio_canvas' },
-                    imgFailed
-                      ? h(
-                          'div',
-                          { className: 'dshdrawio_empty' },
-                          h('span', { className: 'dshdrawio_error' }, t('preview.failed')),
-                          h('span', { className: 'dshdrawio_small' }, `${active.path}`),
-                        )
-                      : h('img', {
-                          key: previewKey,
-                          src: `${API}/preview?path=${encodeURIComponent(active.path)}&v=${previewKey}`,
-                          alt: `${active.path}`,
-                          onLoad: () => setImgFailed(false),
-                          onError: () => setImgFailed(true),
-                        }),
-                  ),
-                ),
+              : h(DrawioPreview, {
+                  path: active.path,
+                  version: previewKey,
+                  failed: imgFailed,
+                  onRetry: () => setImgFailed(false),
+                  onFail: () => setImgFailed(true),
+                  t,
+                }),
           ),
         )
       })()
@@ -682,6 +696,13 @@ window.__ModuleLoader__.load({
             ),
             h('button', { type: 'button', className: 'dshdrawio_btn dshdrawio_btnPrimary', onClick: () => void createFile() }, t('action.new')),
           ),
+        ),
+        // Self-check banner: makes every runtime prerequisite visible on the
+        // page itself, so a broken step is diagnosable without the console.
+        h(
+          'div',
+          { className: 'dshdrawio_selfcheck', 'data-ok': String(selfCheckOk) },
+          selfCheckOk ? '✓ styles injected' : '✗ styles missing',
         ),
         // Overview strip: shared border, inner rules between tiles.
         h(
@@ -773,6 +794,8 @@ window.__ModuleLoader__.load({
      */
     function DrawioChatCard(props) {
       const t = typeof props.t === 'function' ? props.t : (key) => key
+      const getService = typeof props.getService === 'function' ? props.getService : () => undefined
+      chatCardService = getService
       const block = props.block
       const settled = props.phase === 'result' && block !== undefined && Array.isArray(block.content)
       const target = settled ? drawioCallTarget(block) : undefined
@@ -847,7 +870,15 @@ window.__ModuleLoader__.load({
           { className: 'dshdrawio_chatFoot' },
           h(
             'button',
-            { type: 'button', className: 'dshdrawio_chatLink', onClick: () => void ctxOpenPanel(PANEL_ID) },
+            {
+              type: 'button',
+              className: 'dshdrawio_chatLink',
+              onClick: () => {
+                const service = typeof chatCardService === 'function' ? chatCardService('betterSidebar') : null
+                const routed = service !== null && service !== undefined && path !== undefined && openSidebarEditor(service, path)
+                if (!routed) ctxOpenPanel(PANEL_ID)
+              },
+            },
             t('action.open'),
           ),
         ),
@@ -859,6 +890,7 @@ window.__ModuleLoader__.load({
      * so go through `ctx.get()` inside the component's render closure.
      */
     let ctxLayoutRef = null
+    let chatCardService = null
 
     function ctxOpenPanel(panelId) {
       const layout = typeof ctxLayoutRef === 'function' ? ctxLayoutRef() : ctxLayoutRef
@@ -869,56 +901,273 @@ window.__ModuleLoader__.load({
       console.warn('dsh-drawio: layout service unavailable; cannot focus the panel')
     }
 
-    /** The right-sidebar pane: the most recently touched diagram, always mounted. */
-    function DrawioRightPane(props) {
-      const t = typeof props.t === 'function' ? props.t : (key) => key
-      const [latest, setLatest] = React.useState(null)
-      const [previewKey, setPreviewKey] = React.useState(0)
+    /**
+     * Zoomable preview: wheel scales around the cursor, so a very tall diagram
+     * can be read at 100% and panned with the scrollbars instead of being
+     * crushed to fit the stage.
+     */
+    function DrawioPreview(props) {
+      const { path, version, failed, onRetry, onFail, t } = props
+      const [scale, setScale] = React.useState(1)
+      const [naturalWidth, setNaturalWidth] = React.useState(null)
+      const canvasRef = React.useRef(null)
+      const scaleRef = React.useRef(1)
 
-      const loadLatest = React.useCallback(async () => {
-        try {
-          const payload = await callApi('/list?recursive=1')
-          const files = Array.isArray(payload.files) ? payload.files : []
-          setLatest(files.length > 0 ? files[0] : null)
-        } catch {
-          setLatest(null)
-        }
-      }, [])
-
+      // React attaches onWheel as a PASSIVE listener, so preventDefault() inside
+      // it is ignored and the browser just scrolls the container. Zoom needs a
+      // non-passive listener: attach it by hand on the canvas node.
       React.useEffect(() => {
-        void loadLatest()
-      }, [loadLatest])
+        const node = canvasRef.current
+        if (node === null || node === undefined) return undefined
+        const onWheel = (event) => {
+          if (!event.ctrlKey && !event.metaKey) return
+          event.preventDefault()
+          const current = scaleRef.current
+          const next = Math.min(4, Math.max(0.2, current * (event.deltaY < 0 ? 1.15 : 1 / 1.15)))
+          scaleRef.current = next
+          setScale(next)
+        }
+        node.addEventListener('wheel', onWheel, { passive: false })
+        return () => node.removeEventListener('wheel', onWheel)
+      }, [])
 
       return h(
         'div',
-        { className: 'dshdrawio_right' },
-        h('div', { className: 'dshdrawio_rightTitle' }, t('panel.title')),
-        latest === null
-          ? h('div', { className: 'dshdrawio_rightEmpty' }, t('list.empty'))
+        { className: 'dshdrawio_preview' },
+        failed
+          ? h(
+              'div',
+              { className: 'dshdrawio_empty' },
+              h('span', { className: 'dshdrawio_error' }, t('preview.failed')),
+              h('span', { className: 'dshdrawio_small' }, path),
+              h('button', { type: 'button', className: 'dshdrawio_btn', onClick: onRetry }, t('list.retry')),
+            )
           : h(
-              React.Fragment,
-              null,
-              h(
-                'div',
-                { className: 'dshdrawio_rightCard' },
-                h('img', {
-                  key: previewKey,
-                  src: `${API}/preview?path=${encodeURIComponent(latest.path)}&v=${previewKey}`,
-                  alt: latest.path,
-                }),
-              ),
-              h(
-                'button',
-                {
-                  type: 'button',
-                  className: 'dshdrawio_btn',
-                  style: { alignSelf: 'flex-start' },
-                  onClick: () => void ctxOpenPanel(PANEL_ID),
+              'div',
+              {
+                className: 'dshdrawio_canvas',
+                ref: canvasRef,
+                title: t('preview.zoomHint'),
+                style: { width: naturalWidth === null ? '100%' : `${Math.round(naturalWidth * scale)}px`, maxWidth: 'none' },
+              },
+              h('img', {
+                key: version,
+                src: `${API}/preview?path=${encodeURIComponent(path)}&v=${version}`,
+                alt: path,
+                onLoad: (event) => {
+                  // scale 1 = the SVG's intrinsic pixel width, so tall diagrams
+                  // open at full size and pan; zoom scales around that.
+                  const intrinsic = event.target?.naturalWidth
+                  if (Number.isFinite(intrinsic) && intrinsic > 0) setNaturalWidth(intrinsic)
                 },
-                t('action.open'),
-              ),
+                onError: (event) => {
+                  // Real load error only: the retry remount fires onLoad first.
+                  if (event.target?.naturalWidth === 0 && typeof onFail === 'function') onFail()
+                },
+              }),
             ),
       )
+    }
+
+    /**
+     * One editable diagram tab in the right sidebar (dsh-better-sidebar
+     * descriptor tab). `tab.contentId` is the seed id `drawio:<path>`.
+     *
+     * The embedded editor runs here directly — the user edits without leaving
+     * the conversation view. State per contentId lives in a module map so the
+     * editor survives tab switches (better-sidebar keepMounted).
+     */
+    function DrawioSidebarEditor(props) {
+      const { tab, visible } = props
+      console.info('[dsh-drawio] sidebar editor render:', { visible, contentId: tab?.contentId })
+      const t = typeof props.t === 'function' ? props.t : (key) => key
+      const contentId = typeof tab?.contentId === 'string' ? tab.contentId : ''
+      const path = contentId.startsWith(`${TOOL_NAME}:`) ? contentId.slice(TOOL_NAME.length + 1) : contentId
+      const [xmlDoc, setXmlDoc] = React.useState(null)
+      const [draft, setDraft] = React.useState(null)
+      const [dirty, setDirty] = React.useState(false)
+      const [saveState, setSaveState] = React.useState('idle')
+      const [docError, setDocError] = React.useState(null)
+      const [previewKey, setPreviewKey] = React.useState(0)
+      const [dark, setDark] = React.useState(false)
+      const [config, setConfig] = React.useState(null)
+
+      React.useEffect(() => {
+        let cancelled = false
+        void callApi('/config')
+          .then((payload) => {
+            if (cancelled) return
+            setConfig(payload)
+          })
+          .catch(() => {})
+        return () => {
+          cancelled = true
+        }
+      }, [])
+
+      const markDirty = React.useCallback((nextXml) => {
+        setDraft(nextXml)
+        setDirty(true)
+      }, [])
+
+      const save = React.useCallback(async () => {
+        if (draft === null || path.length === 0) return
+        setSaveState('saving')
+        try {
+          await callApi('/save', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ path, xml: draft }),
+          })
+          setXmlDoc(draft)
+          setDirty(false)
+          setSaveState('saved')
+          setPreviewKey((key) => key + 1)
+          window.setTimeout(() => setSaveState('idle'), 1800)
+        } catch (error) {
+          setSaveState('idle')
+          setDocError(error instanceof Error ? error.message : String(error))
+        }
+      }, [draft, path])
+
+      React.useEffect(() => {
+        if (path.length === 0) return undefined
+        let cancelled = false
+        setXmlDoc(null)
+        setDocError(null)
+        setDirty(false)
+        setDraft(null)
+        void callApi(`/document?path=${encodeURIComponent(path)}`)
+          .then((payload) => {
+            if (cancelled) return
+            setXmlDoc(payload.xml)
+          })
+          .catch((error) => {
+            if (cancelled) return
+            setDocError(error instanceof Error ? error.message : String(error))
+          })
+        return () => {
+          cancelled = true
+        }
+      }, [path])
+
+      // Follow the host light/dark preference for the editor iframe.
+      React.useEffect(() => {
+        if (typeof globalThis.document === 'undefined' || typeof MutationObserver === 'undefined') return undefined
+        const read = () => {
+          const root = globalThis.document.documentElement
+          if (root === null || root === undefined) return
+          const scheme = typeof getComputedStyle === 'function' ? getComputedStyle(root).colorScheme : ''
+          setDark(scheme === 'dark' || root.getAttribute('data-theme') === 'dark' || globalThis.document.body?.dataset.theme === 'dark')
+        }
+        read()
+        const observer = new MutationObserver(read)
+        observer.observe(globalThis.document.documentElement, { attributes: true, attributeFilter: ['class', 'data-theme', 'style'] })
+        return () => observer.disconnect()
+      }, [])
+
+      if (path.length === 0) {
+        return h('div', { className: 'dshdrawio_right' }, h('div', { className: 'dshdrawio_rightEmpty' }, t('empty.body')))
+      }
+      return h(
+        'div',
+        { className: 'dshdrawio_right' },
+        h(
+          'div',
+          { className: 'dshdrawio_toolbar', style: { borderRadius: 10 } },
+          h('span', { className: 'dshdrawio_hint dshdrawio_path' }, path),
+          h(
+            'button',
+            {
+              type: 'button',
+              className: 'dshdrawio_btn dshdrawio_btnPrimary',
+              disabled: !dirty || saveState === 'saving',
+              onClick: () => void save(),
+            },
+            saveState === 'saving' ? t('action.saving') : saveState === 'saved' ? t('action.saved') : t('action.save'),
+          ),
+        ),
+        docError !== null
+          ? h('div', { className: 'dshdrawio_error' }, docError)
+          : xmlDoc === null
+            ? h('div', { className: 'dshdrawio_empty' }, h('span', null, t('list.loading')))
+            : h(
+                'div',
+                {
+                  className: 'dshdrawio_frameWrap',
+                  style: { borderRadius: 10, minHeight: 480 },
+                },
+                h(DrawioEditor, {
+                  embedOrigin: config?.embedOrigin ?? 'https://embed.diagrams.net',
+                  xml: xmlDoc,
+                  title: path,
+                  dark,
+                  t,
+                  onDirty: markDirty,
+                  onError: setDocError,
+                }),
+              ),
+      )
+    }
+
+    /**
+     * Register the sidebar editor tab with dsh-better-sidebar and remember the
+     * most recently opened diagram path, so a fresh preview can auto-open it.
+     */
+    let lastDiagramPath = null
+
+    function registerSidebarEditor(ctx, t) {
+      const get = typeof ctx.get === 'function' ? (name) => ctx.get(name) : () => undefined
+      const service = get('betterSidebar')
+      if (service === undefined || service === null || typeof service.registerTab !== 'function') {
+        // dsh-better-sidebar not in the composition: the central panel still works.
+        return
+      }
+      const disposers = []
+      try {
+        disposers.push(
+          service.registerTab({
+            id: TOOL_NAME,
+            title: () => t('panel.title'),
+            order: 30,
+            single: true,
+            component: (tabProps) => DrawioSidebarEditor({ ...tabProps, t }),
+          }),
+        )
+        ctx.effect(() => () => {
+          for (const dispose of disposers.reverse()) {
+            try {
+              dispose()
+            } catch {
+              // The registry already dropped the descriptor on teardown.
+            }
+          }
+        }, 'sorarisu-dsh-drawio: sidebar tab')
+      } catch (error) {
+        console.warn('dsh-drawio: failed to register the sidebar editor tab:', String(error))
+      }
+    }
+
+    /** Open the sidebar editor tab; returns false when better-sidebar is absent. */
+    function openSidebarEditor(ctx, path) {
+      lastDiagramPath = path
+      const get = typeof ctx?.get === 'function' ? (name) => ctx.get(name) : () => undefined
+      const service = get('betterSidebar')
+      if (service === undefined || service === null || typeof service.openTab !== 'function') return false
+      try {
+        service.openTab({
+          type: TOOL_NAME,
+          title: String(path).split('/').pop(),
+          id: `${TOOL_NAME}:${path}`,
+          path,
+          target: 'side',
+          reveal: true,
+        })
+        return true
+      } catch (error) {
+        console.warn('dsh-drawio: failed to open the sidebar editor:', String(error))
+        return false
+      }
     }
 
     return {
@@ -937,12 +1186,14 @@ window.__ModuleLoader__.load({
             tag.dataset.pluginCss = tagId
             document.head.appendChild(tag)
           }
+          stylesInjected = true
           const previous = tag.textContent
           if (previous !== CSS) tag.textContent = CSS
           return () => {
             // Keep the tag on unload: other registrations may share the page,
             // and remount re-runs this effect anyway.
             if (tag.textContent === CSS) tag.textContent = previous ?? ''
+            stylesInjected = false
           }
         }, 'sorarisu-dsh-drawio: stylesheet')
         ctx.effect(() => ctx.locale.register(NS, { zh: ZH, en: EN }), 'sorarisu-dsh-drawio: dictionaries')
@@ -982,7 +1233,7 @@ window.__ModuleLoader__.load({
               name: 'main',
               key: PANEL_ID,
               locale: NS,
-              inject: () => ({ t }),
+              inject: () => ({ t, getService: (name) => ctx.get(name) }),
             },
             DrawioPanel,
           )
@@ -996,26 +1247,14 @@ window.__ModuleLoader__.load({
               name: 'tool.call.toolview',
               key: TOOL_NAME,
               locale: NS,
-              inject: () => ({ t }),
+              inject: () => ({ t, getService: (name) => ctx.get(name) }),
             },
             DrawioChatCard,
           )
         })
 
-        // Right-sidebar tab (dsh-better-sidebar): the latest diagram, always visible.
-        ctx.slots.inject('sidebar.right.pane.tab', () => {
-          return ctx.slots.register(
-            {
-              name: 'sidebar.right.pane.tab',
-              key: 'drawio-preview',
-              order: 30,
-              label: () => t('panel.title'),
-              locale: NS,
-              inject: () => ({ t }),
-            },
-            DrawioRightPane,
-          )
-        })
+        // Editable diagram tab in the right sidebar (dsh-better-sidebar).
+        registerSidebarEditor(ctx, t)
       },
     }
   },

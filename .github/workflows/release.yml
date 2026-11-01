@@ -1,0 +1,85 @@
+name: Release
+
+# Publish to npm and create a GitHub release when a version commit lands on
+# main. Bump the version locally first (`npm version patch|minor|major`), push
+# the tag with the commit, and this workflow does the rest.
+#
+# Trigger: a push to main whose HEAD carries a v* tag. Plain pushes without a
+# tag are built and tested but never published — publishing stays an explicit
+# version-bump action, not a side effect of merging docs.
+#
+# Authentication is npm TRUSTED PUBLISHING (OIDC): no NPM_TOKEN secret is
+# needed, but the package page on npmjs.com must list
+#   repository: Nvoyo/dsh-drawio
+#   workflow:   .github/workflows/release.yml
+# in its publishing settings, and NODE_AUTH_TOKEN must stay unset.
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+
+permissions:
+  contents: write # create the GitHub release
+  id-token: write # REQUIRED for npm trusted publishing (OIDC)
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Syntax check every module
+        run: |
+          for f in index.js client.js lib/*.js; do node --check "$f"; done
+      - name: Host suite (tool, routes, path policy)
+        run: node test/host.test.mjs
+      - name: Client suite (registration, render, protocol)
+        run: node test/client.test.mjs
+      - name: End-to-end suite (model to panel round trip)
+        run: node test/e2e.test.mjs
+
+  release:
+    name: Publish to npm + GitHub release
+    needs: test
+    # Only release for tagged pushes to main. `github.ref` is refs/tags/v* on
+    # a tag push; the branch filter above admits the workflow, this guard
+    # admits the job.
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org/
+          # scope packages default to restricted; publish must be public
+      - name: Verify the tag matches package.json
+        run: |
+          PKG_VERSION="v$(node -p "require('./package.json').version")"
+          TAG_VERSION="${GITHUB_REF_NAME}"
+          if [ "$PKG_VERSION" != "$TAG_VERSION" ]; then
+            echo "::error::tag $TAG_VERSION does not match package.json ($PKG_VERSION)"
+            exit 1
+          fi
+      - name: Publish
+        # Trusted publishing: setup-node without a token lets npm exchange the
+        # workflow's OIDC token for short-lived publish credentials. The
+        # package's trusted-publisher settings on npmjs.com must list this
+        # repository and workflow file (.github/workflows/release.yml).
+        # NODE_AUTH_TOKEN must NOT be set here — its presence disables OIDC.
+        run: npm publish --access public --provenance
+      - name: GitHub release
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            --title "$GITHUB_REF_NAME" \
+            --generate-notes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

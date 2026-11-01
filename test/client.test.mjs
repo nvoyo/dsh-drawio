@@ -108,7 +108,6 @@ function createClientContext(React) {
   const panels = new Map()
   const rows = new Map()
   const toolviews = new Map()
-  const rightTabs = new Map()
   const dictionaries = []
   const locale = {
     active: 'zh',
@@ -137,12 +136,10 @@ function createClientContext(React) {
       register(options, component) {
         if (options.name === 'main') panels.set(options.key, { options, component })
         else if (options.name === 'tool.call.toolview') toolviews.set(options.key, { options, component })
-        else if (options.name === 'sidebar.right.pane.tab') rightTabs.set(options.key, { options, component })
         else rows.set(options.id, { options, component })
         return () => {
           if (options.name === 'main') panels.delete(options.key)
           else if (options.name === 'tool.call.toolview') toolviews.delete(options.key)
-          else if (options.name === 'sidebar.right.pane.tab') rightTabs.delete(options.key)
           else rows.delete(options.id)
         }
       },
@@ -152,7 +149,7 @@ function createClientContext(React) {
       },
     },
   }
-  return { ctx, panels, rows, toolviews, rightTabs, dictionaries, React }
+  return { ctx, panels, rows, toolviews, dictionaries, React }
 }
 
 /** Walk a rendered tree depth-first, rendering child components as React would. */
@@ -567,7 +564,7 @@ async function main() {
     })
   })
 
-  await check('registers the chat toolview and the right-sidebar tab', async () => {
+  await check('registers the chat toolview and skips the sidebar tab without better-sidebar', async () => {
     installDomStub()
     React.resetAll()
     React.reset()
@@ -584,10 +581,41 @@ async function main() {
     assert.ok(toolview !== undefined, 'expected a tool.call.toolview entry keyed drawio')
     assert.equal(toolview.options.name, 'tool.call.toolview')
 
-    // right pane: registered as a tab
-    const pane = fresh.rightTabs.get('drawio-preview')
-    assert.ok(pane !== undefined, 'expected a sidebar.right.pane.tab entry keyed drawio-preview')
-    assert.equal(pane.options.key, 'drawio-preview')
+    // No betterSidebar service in this fake context: the plugin must not throw.
+  })
+
+  await check('registers the editable sidebar tab when better-sidebar is present', async () => {
+    installDomStub()
+    React.resetAll()
+    React.reset()
+    const entry = globalThis.__dshDrawioEntry
+    const exportsObject = entry.factory((name) => {
+      if (name === 'react') return React
+      throw new Error(`unexpected require ${name}`)
+    })
+    const fresh = createClientContext(React)
+    const registered = []
+    const opened = []
+    fresh.ctx.get = (name) => {
+      if (name === 'betterSidebar') {
+        return {
+          registerTab: (descriptor) => {
+            registered.push(descriptor)
+            return () => {}
+          },
+          openTab: (seed) => opened.push(seed),
+        }
+      }
+      return undefined
+    }
+    exportsObject.apply(fresh.ctx)
+    assert.equal(registered.length, 1, 'expected exactly one sidebar tab descriptor')
+    assert.equal(registered[0].id, 'drawio')
+    assert.equal(typeof registered[0].component, 'function')
+
+    // The open helper routes a path into a side-targeted tab seed.
+    const tool = host.tools.get('drawio')
+    assert.ok(tool !== undefined)
   })
 
   await rm(workspace, { recursive: true, force: true })
