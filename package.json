@@ -1,6 +1,6 @@
 {
   "name": "@sorarisu/dsh-drawio",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "private": false,
   "type": "module",
   "description": "draw.io diagrams for DeepSeek Harness: an agent tool that writes .drawio files, plus a sidebar panel with an embedded draw.io editor and an offline SVG preview.",
